@@ -1,6 +1,5 @@
 import tkinter as tk
-import os
-import pygame
+from tkinter import messagebox
 
 
 class mainUI:
@@ -20,8 +19,19 @@ class mainUI:
         self.master.mainloop()
 
     def start_game(self):
-        print("test")
-        self.master.destroy()
+        height, width = self.height.get(), self.width.get()
+        if height == "" or width == "":
+            messagebox.showerror("Error", "Error the required fields are empty")
+        else:
+            try:
+                height, width = int(height), int(width)
+                print("open game with:", height, width)
+                self.master.destroy()
+
+            except ValueError as e:
+                messagebox.showerror("Error", "There was an error \n \n {}".format(e))
+                self.height.delete(0, "end")
+                self.width.delete(0, "end")
 
 
 root = tk.Tk()
