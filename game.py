@@ -1,21 +1,6 @@
 import pygame, sys, random
 from pygame.locals import *
 
-class Stack:
-    def __init__(self):
-        self.stack = []
-        self.top = -1
-
-    def push(self, item):
-        self.stack.append(item)
-        self.top += 1
-
-    def pop(self):
-        self.stack.pop()
-        self.top -= 1
-
-    def peek(self):
-        return self.stack[-1]
 
 class SlidingGame:
     class ActionStack:
