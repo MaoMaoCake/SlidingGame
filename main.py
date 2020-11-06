@@ -25,6 +25,7 @@ class mainUI:
         else:
             try:
                 height, width = int(height), int(width)
+                # todo add open game
                 print("open game with:", height, width)
                 self.master.destroy()
 
