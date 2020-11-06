@@ -13,7 +13,7 @@ class mainUI:
         size = tuple(int(_) for _ in master.geometry().split('+')[0].split('x'))
         x = screen_width / 2 - size[0] / 2
         y = screen_height / 2 - size[1] / 2
-        master.geometry("180x120+%d+%d" % (x-(180/2), y-(120/2)))
+        master.geometry("180x150+%d+%d" % (x - (180 / 2), y - (150 / 2)))
 
         # force ui to not resize
         self.master.resizable(False, False)
@@ -24,6 +24,7 @@ class mainUI:
         tk.Label(self.master, text="Size Of Grid", justify="center").grid(columnspan=3, row=2, column=2)
         tk.Label(self.master, text="width", justify="center").grid(column=1, row=10)
         tk.Label(self.master, text="height", justify="center").grid(column=1, row=11)
+        tk.Label(self.master, text="difficulty", justify="center").grid(column=1, row=12)
 
         # entry elements
         self.width = tk.Entry(self.master)
@@ -31,8 +32,14 @@ class mainUI:
         self.height = tk.Entry(self.master)
         self.height.grid(row=11, column=2)
 
+        # select difficulty
+        self.difficulty = tk.StringVar()
+        self.difficulty.set('normal')
+        OPTIONS = ['impossible', 'expert', 'hard', 'normal', 'easy+', 'easy', 'very easy', 'idiot']
+        self.difficulty_option = tk.OptionMenu(master, self.difficulty, *OPTIONS).grid(row=12, column=2)
+
         # bind the button
-        tk.Button(self.master, text="Start", command=self.start_game).grid(column=2, row=12)
+        tk.Button(self.master, text="Start", command=self.start_game).grid(column=2, row=13)
 
         # start the ui Loop
         self.master.mainloop()
@@ -69,7 +76,7 @@ class mainUI:
                     # destroy the selection UI
                     self.master.destroy()
                     # call the sliding game instance with specified dimensions
-                    S = SlidingGame(width=width, height=height)
+                    S = SlidingGame(width=width, height=height, difficulty=self.difficulty.get())
                     S.main()
             # catch invalid value errors
             except ValueError as e:
