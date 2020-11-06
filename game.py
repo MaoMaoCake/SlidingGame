@@ -17,38 +17,82 @@ class Stack:
     def peek(self):
         return self.stack[-1]
 
-
 class SlidingGame:
-    def __init__(self, width=4, height=4, swaps=0):
+    class ActionStack:
+        def __init__(self):
+            self.stack = []
+            self.top = -1
+
+        def push(self, item):
+            self.stack.append(item)
+            self.top += 1
+
+        def pop(self):
+            self.top -= 1
+            return self.stack.pop()
+
+        def peek(self):
+            return self.stack[-1]
+
+        def to_list(self):
+            return self.stack
+
+        def add(self,target):
+            self.stack += target.stack
+            self.top += len(target)
+            return self
+
+        def clear_stack(self):
+            self.stack = []
+
+        def __len__(self):
+            return self.top + 1
+
+    def __init__(self, width=4, height=4, difficulty="normal"):
         # Create the constants (go ahead and experiment with different values)
         self.board_width = width  # number of columns in the board
         self.board_height = height  # number of rows in the board
-        self.TILESIZE = 80
-        self.WINDOWWIDTH = 640
-        self.WINDOWHEIGHT = 480
+        self.tile_size = 80
+        self.window_width = 640
+        self.window_height = 480
         self.FPS = 30
         self.BLANK = None
-
-        #color setttings
+        if difficulty == "impossible":
+            self.difficulty = 200
+        elif difficulty == "expert":
+            self.difficulty = 120
+        elif difficulty == "hard":
+            self.difficulty = 100
+        elif difficulty == "normal":
+            self.difficulty = 80
+        elif difficulty == "easy+":
+            self.difficulty = 60
+        elif difficulty == "easy":
+            self.difficulty = 40
+        elif difficulty == "very easy":
+            self.difficulty = 20
+        elif difficulty == "idiot":
+            self.difficulty = 5
+        # color settings
         #                 R    G    B
         self.BLACK = (0, 0, 0)
         self.WHITE = (255, 255, 255)
-        self.BRIGHTBLUE = (0, 50, 255)
+        self.BRIGHT_BLUE = (0, 50, 255)
         self.DARKTURQUOISE = (3, 54, 73)
         self.GREEN = (0, 204, 0)
 
-        self.BGCOLOR = self.DARKTURQUOISE
-        self.TILECOLOR = self.GREEN
-        self.TEXTCOLOR = self.WHITE
-        self.BORDERCOLOR = self.BRIGHTBLUE
-        self.BASICFONTSIZE = 20
+        self.bg_color = self.DARKTURQUOISE
+        self.tile_color = self.GREEN
+        self.text_color = self.WHITE
+        self.border_color = self.BRIGHT_BLUE
+        self.font_size = 20
 
-        self.BUTTONCOLOR = self.WHITE
-        self.BUTTONTEXTCOLOR = self.BLACK
-        self.MESSAGECOLOR = self.WHITE
+        self.button_color = self.WHITE
+        self.button_text_color = self.BLACK
+        self.message_color = self.WHITE
 
-        self.XMARGIN = int((self.WINDOWWIDTH - (self.TILESIZE * self.board_width + (self.board_width - 1))) / 2)
-        self.YMARGIN = int((self.WINDOWHEIGHT - (self.TILESIZE * self.board_height + (self.board_height - 1))) / 2)
+        self.x_margin = int((self.window_width - (self.tile_size * self.board_width + (self.board_width - 1))) / 2)
+        self.y_margin = int((self.window_height - (self.tile_size * self.board_height + (self.board_height - 1))) / 2)
 
         self.UP = 'up'
         self.DOWN = 'down'
@@ -56,22 +100,25 @@ class SlidingGame:
         self.RIGHT = 'right'
 
     def main(self):
-        global FPSCLOCK, DISPLAYSURF, BASICFONT, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT
+        global FPS_clock, DISPLAYSURF, basic_font, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT
 
         pygame.init()
-        FPSCLOCK = pygame.time.Clock()
-        DISPLAYSURF = pygame.display.set_mode((self.WINDOWWIDTH, self.WINDOWHEIGHT))
+        FPS_clock = pygame.time.Clock()
+        DISPLAYSURF = pygame.display.set_mode((self.window_width, self.window_height))
         pygame.display.set_caption('Slide Puzzle')
-        BASICFONT = pygame.font.Font('freesansbold.ttf', self.BASICFONTSIZE)
+        basic_font = pygame.font.Font('freesansbold.ttf', self.font_size)
 
         # Store the option buttons and their rectangles in OPTIONS.
-        RESET_SURF, RESET_RECT = self.makeText('Reset', self.TEXTCOLOR, self.TILECOLOR, self.WINDOWWIDTH - 120, self.WINDOWHEIGHT - 90)
-        NEW_SURF, NEW_RECT = self.makeText('New Game', self.TEXTCOLOR, self.TILECOLOR, self.WINDOWWIDTH - 120, self.WINDOWHEIGHT - 60)
-        SOLVE_SURF, SOLVE_RECT = self.makeText('Solve', self.TEXTCOLOR, self.TILECOLOR, self.WINDOWWIDTH - 120, self.WINDOWHEIGHT - 30)
+        RESET_SURF, RESET_RECT = self.makeText('Reset', self.text_color, self.tile_color, self.window_width - 120,
+                                               self.window_height - 90)
+        NEW_SURF, NEW_RECT = self.makeText('New Game', self.text_color, self.tile_color, self.window_width - 120,
+                                           self.window_height - 60)
+        SOLVE_SURF, SOLVE_RECT = self.makeText('Solve', self.text_color, self.tile_color, self.window_width - 120,
+                                               self.window_height - 30)
 
-        mainBoard, solutionSeq = self.generateNewPuzzle(80)
+        mainBoard, solutionSeq = self.generateNewPuzzle(self.difficulty)
         SOLVEDBOARD = self.getStartingBoard()  # a solved board is the same as the board in a start state.
-        allMoves = []  # list of moves made from the solved configuration
+        allMoves = self.ActionStack()  # list of moves made from the solved configuration
 
         while True:  # main game loop
             slideTo = None  # the direction, if any, a tile should slide
@@ -90,13 +137,15 @@ class SlidingGame:
                         # check if the user clicked on an option button
                         if RESET_RECT.collidepoint(event.pos):
                             self.resetAnimation(mainBoard, allMoves)  # clicked on Reset button
-                            allMoves = []
+                            allMoves.clear_stack()
                         elif NEW_RECT.collidepoint(event.pos):
-                            mainBoard, solutionSeq = self.generateNewPuzzle(80)  # clicked on New Game button
-                            allMoves = []
+                            mainBoard, solutionSeq = self.generateNewPuzzle(
+                                self.difficulty)  # clicked on New Game button
+                            allMoves.clear_stack()
                         elif SOLVE_RECT.collidepoint(event.pos):
-                            self.resetAnimation(mainBoard, solutionSeq + allMoves)  # clicked on Solve button
-                            allMoves = []
+                            self.resetAnimation(mainBoard, solutionSeq.add(allMoves))
+                            # clicked on Solve button
+                            allMoves.clear_stack()
                     else:
                         # check if the clicked tile was next to the blank spot
 
@@ -123,11 +172,11 @@ class SlidingGame:
 
             if slideTo:
                 self.slideAnimation(mainBoard, slideTo, 'Click tile or press arrow keys to slide.',
-                               8)  # show slide on screen
+                                    8)  # show slide on screen
                 self.makeMove(mainBoard, slideTo)
-                allMoves.append(slideTo)  # record the slide
+                allMoves.push(slideTo)  # record the slide
             pygame.display.update()
-            FPSCLOCK.tick(self.FPS)
+            FPS_clock.tick(self.FPS)
 
     def terminate(self):
         pygame.quit()
@@ -158,14 +207,14 @@ class SlidingGame:
         board[self.board_width - 1][self.board_height - 1] = self.BLANK
         return board
 
-    def getBlankPosition(self,board):
+    def getBlankPosition(self, board):
         # Return the x and y of board coordinates of the blank space.
         for x in range(self.board_width):
             for y in range(self.board_height):
                 if board[x][y] == self.BLANK:
                     return (x, y)
 
-    def makeMove(self,board, move):
+    def makeMove(self, board, move):
         # This function does not check if the move is valid.
         blankx, blanky = self.getBlankPosition(board)
 
@@ -178,14 +227,14 @@ class SlidingGame:
         elif move == self.RIGHT:
             board[blankx][blanky], board[blankx - 1][blanky] = board[blankx - 1][blanky], board[blankx][blanky]
 
-    def isValidMove(self,board, move):
+    def isValidMove(self, board, move):
         blankx, blanky = self.getBlankPosition(board)
         return (move == self.UP and blanky != len(board[0]) - 1) or \
                (move == self.DOWN and blanky != 0) or \
                (move == self.LEFT and blankx != len(board) - 1) or \
                (move == self.RIGHT and blankx != 0)
 
-    def getRandomMove(self,board, lastMove=None):
+    def getRandomMove(self, board, lastMove=None):
         # start with a full list of all four moves
         validMoves = [self.UP, self.DOWN, self.LEFT, self.RIGHT]
 
@@ -202,9 +251,9 @@ class SlidingGame:
         # return a random move from the list of remaining moves
         return random.choice(validMoves)
 
-    def getLeftTopOfTile(self,tileX, tileY):
-        left = self.XMARGIN + (tileX * self.TILESIZE) + (tileX - 1)
-        top = self.YMARGIN + (tileY * self.TILESIZE) + (tileY - 1)
+    def getLeftTopOfTile(self, tileX, tileY):
+        left = self.x_margin + (tileX * self.tile_size) + (tileX - 1)
+        top = self.y_margin + (tileY * self.tile_size) + (tileY - 1)
         return (left, top)
 
     def getSpotClicked(self, board, x, y):
@@ -212,7 +261,7 @@ class SlidingGame:
         for tileX in range(len(board)):
             for tileY in range(len(board[0])):
                 left, top = self.getLeftTopOfTile(tileX, tileY)
-                tileRect = pygame.Rect(left, top, self.TILESIZE, self.TILESIZE)
+                tileRect = pygame.Rect(left, top, self.tile_size, self.tile_size)
                 if tileRect.collidepoint(x, y):
                     return (tileX, tileY)
         return (None, None)
@@ -221,23 +270,23 @@ class SlidingGame:
         # draw a tile at board coordinates tilex and tiley, optionally a few
         # pixels over (determined by adjx and adjy)
         left, top = self.getLeftTopOfTile(tilex, tiley)
-        pygame.draw.rect(DISPLAYSURF, self.TILECOLOR, (left + adjx, top + adjy, self.TILESIZE, self.TILESIZE))
-        textSurf = BASICFONT.render(str(number), True, self.TEXTCOLOR)
+        pygame.draw.rect(DISPLAYSURF, self.tile_color, (left + adjx, top + adjy, self.tile_size, self.tile_size))
+        textSurf = basic_font.render(str(number), True, self.text_color)
         textRect = textSurf.get_rect()
-        textRect.center = left + int(self.TILESIZE / 2) + adjx, top + int(self.TILESIZE / 2) + adjy
+        textRect.center = left + int(self.tile_size / 2) + adjx, top + int(self.tile_size / 2) + adjy
         DISPLAYSURF.blit(textSurf, textRect)
 
     def makeText(self, text, color, bgcolor, top, left):
         # create the Surface and Rect objects for some text.
-        textSurf = BASICFONT.render(text, True, color, bgcolor)
+        textSurf = basic_font.render(text, True, color, bgcolor)
         textRect = textSurf.get_rect()
         textRect.topleft = (top, left)
         return (textSurf, textRect)
 
     def drawBoard(self, board, message):
-        DISPLAYSURF.fill(self.BGCOLOR)
+        DISPLAYSURF.fill(self.bg_color)
         if message:
-            textSurf, textRect = self.makeText(message, self.MESSAGECOLOR, self.BGCOLOR, 5, 5)
+            textSurf, textRect = self.makeText(message, self.message_color, self.bg_color, 5, 5)
             DISPLAYSURF.blit(textSurf, textRect)
 
         for tilex in range(len(board)):
@@ -246,9 +295,9 @@ class SlidingGame:
                     self.drawTile(tilex, tiley, board[tilex][tiley])
 
         left, top = self.getLeftTopOfTile(0, 0)
-        width = self.board_width * self.TILESIZE
-        height = self.board_height * self.TILESIZE
-        pygame.draw.rect(DISPLAYSURF, self.BORDERCOLOR, (left - 5, top - 5, width + 11, height + 11), 4)
+        width = self.board_width * self.tile_size
+        height = self.board_height * self.tile_size
+        pygame.draw.rect(DISPLAYSURF, self.border_color, (left - 5, top - 5, width + 11, height + 11), 4)
 
         DISPLAYSURF.blit(RESET_SURF, RESET_RECT)
         DISPLAYSURF.blit(NEW_SURF, NEW_RECT)
@@ -276,9 +325,9 @@ class SlidingGame:
         baseSurf = DISPLAYSURF.copy()
         # draw a blank space over the moving tile on the baseSurf Surface.
         moveLeft, moveTop = self.getLeftTopOfTile(movex, movey)
-        pygame.draw.rect(baseSurf, self.BGCOLOR, (moveLeft, moveTop, self.TILESIZE, self.TILESIZE))
+        pygame.draw.rect(baseSurf, self.bg_color, (moveLeft, moveTop, self.tile_size, self.tile_size))
 
-        for i in range(0, self.TILESIZE, animationSpeed):
+        for i in range(0, self.tile_size, animationSpeed):
             # animate the tile sliding over
             self.checkForQuit()
             DISPLAYSURF.blit(baseSurf, (0, 0))
@@ -292,12 +341,12 @@ class SlidingGame:
                 self.drawTile(movex, movey, board[movex][movey], i, 0)
 
             pygame.display.update()
-            FPSCLOCK.tick(self.FPS)
+            FPS_clock.tick(self.FPS)
 
     def generateNewPuzzle(self, numSlides):
         # From a starting configuration, make numSlides number of moves (and
         # animate these moves).
-        sequence = []
+        sequence = self.ActionStack()
         board = self.getStartingBoard()
         self.drawBoard(board, '')
         pygame.display.update()
@@ -305,18 +354,17 @@ class SlidingGame:
         lastMove = None
         for i in range(numSlides):
             move = self.getRandomMove(board, lastMove)
-            self.slideAnimation(board, move, 'Generating new puzzle...', animationSpeed=int(self.TILESIZE / 3))
+            self.slideAnimation(board, move, 'Generating new puzzle...', animationSpeed=int(self.tile_size / 3))
             self.makeMove(board, move)
-            sequence.append(move)
+            sequence.push(move)
             lastMove = move
-        return (board, sequence)
+        return board, sequence
 
     def resetAnimation(self, board, allMoves):
         # make all of the moves in allMoves in reverse.
-        revAllMoves = allMoves[:]  # gets a copy of the list
-        revAllMoves.reverse()
-
-        for move in revAllMoves:
+        for i in range(len(allMoves)):
+            move = allMoves.pop()
+            print(move)
             if move == self.UP:
                 oppositeMove = self.DOWN
             elif move == self.DOWN:
@@ -325,5 +373,5 @@ class SlidingGame:
                 oppositeMove = self.LEFT
             elif move == self.LEFT:
                 oppositeMove = self.RIGHT
-            self.slideAnimation(board, oppositeMove, '', animationSpeed=int(self.TILESIZE / 2))
+            self.slideAnimation(board, oppositeMove, '', animationSpeed=int(self.tile_size / 2))
             self.makeMove(board, oppositeMove)
