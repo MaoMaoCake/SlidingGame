@@ -2,6 +2,7 @@ import pygame
 import random
 import sys
 from pygame.locals import *
+import time
 
 
 class SlidingGame:
@@ -24,13 +25,14 @@ class SlidingGame:
         def to_list(self):
             return self.stack
 
-        def add(self,target):
+        def add(self, target):
             self.stack += target.stack
             self.top += len(target)
             return self
 
         def clear_stack(self):
             self.stack = []
+            self.top = -1
 
         def __len__(self):
             return self.top + 1
@@ -94,8 +96,8 @@ class SlidingGame:
 
         # Store the option buttons and their rectangles in OPTIONS.
         self.undo_surf, self.undo_rect = self.makeText('Undo', self.text_color, self.tile_color,
-                                                         self.window_width - 120,
-                                                         self.window_height - 120)
+                                                       self.window_width - 120,
+                                                       self.window_height - 120)
         self.reset_surf, self.reset_rect = self.makeText('Reset', self.text_color, self.tile_color,
                                                          self.window_width - 120,
                                                          self.window_height - 90)
@@ -107,7 +109,6 @@ class SlidingGame:
                                                          self.window_height - 30)
 
     def main(self):
-
 
         mainBoard, solutionSeq = self.generateNewPuzzle(self.difficulty)
         SOLVEDBOARD = self.getStartingBoard()  # a solved board is the same as the board in a start state.
@@ -140,7 +141,7 @@ class SlidingGame:
                             # clicked on Solve button
                             allMoves.clear_stack()
                         elif self.undo_rect.collidepoint(event.pos):
-                            self.undo(mainBoard,allMoves)
+                            self.undo(mainBoard, allMoves)
                     else:
                         # check if the clicked tile was next to the blank spot
 
@@ -297,7 +298,7 @@ class SlidingGame:
         self.display_surf.blit(self.reset_surf, self.reset_rect)
         self.display_surf.blit(self.new_surf, self.new_rect)
         self.display_surf.blit(self.solve_surf, self.solve_rect)
-        self.display_surf.blit(self.undo_surf,self.undo_rect)
+        self.display_surf.blit(self.undo_surf, self.undo_rect)
 
     def slideAnimation(self, board, direction, message, animationSpeed):
         # Note: This function does not check if the move is valid.
@@ -372,16 +373,19 @@ class SlidingGame:
             self.slideAnimation(board, oppositeMove, '', animationSpeed=int(self.tile_size / 2))
             self.makeMove(board, oppositeMove)
 
-    def undo(self,board,allMoves):
-        move = allMoves.pop()
-        print(move)
-        if move == self.UP:
-            oppositeMove = self.DOWN
-        elif move == self.DOWN:
-            oppositeMove = self.UP
-        elif move == self.RIGHT:
-            oppositeMove = self.LEFT
-        elif move == self.LEFT:
-            oppositeMove = self.RIGHT
-        self.slideAnimation(board, oppositeMove, '', animationSpeed=int(self.tile_size / 2))
-        self.makeMove(board, oppositeMove)
+    def undo(self, board, allMoves):
+        try:
+            move = allMoves.pop()
+            print(move)
+            if move == self.UP:
+                oppositeMove = self.DOWN
+            elif move == self.DOWN:
+                oppositeMove = self.UP
+            elif move == self.RIGHT:
+                oppositeMove = self.LEFT
+            elif move == self.LEFT:
+                oppositeMove = self.RIGHT
+            self.slideAnimation(board, oppositeMove, '', animationSpeed=int(self.tile_size / 2))
+            self.makeMove(board, oppositeMove)
+        except IndexError:
+            self.drawBoard(board, "No Move to undo")
