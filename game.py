@@ -132,9 +132,9 @@ class SlidingGame:
                             self.resetAnimation(mainBoard, allMoves)  # clicked on Reset button
                             allMoves.clear_stack()
                         elif self.new_rect.collidepoint(event.pos):
+                            allMoves.clear_stack()
                             mainBoard, solutionSeq = self.generateNewPuzzle(
                                 self.difficulty)  # clicked on New Game button
-                            allMoves.clear_stack()
                         elif self.solve_rect.collidepoint(event.pos):
                             self.resetAnimation(mainBoard, solutionSeq.add(allMoves))
                             # clicked on Solve button
