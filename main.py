@@ -6,14 +6,14 @@ from game import SlidingGame
 class mainUI:
     def __init__(self, master):
         self.master = master
-
+        self.master.bind("<Return>",self.start_game)
         # center the selection ui
-        screen_width = master.winfo_screenwidth()
-        screen_height = master.winfo_screenheight()
-        size = tuple(int(_) for _ in master.geometry().split('+')[0].split('x'))
+        screen_width = self.master.winfo_screenwidth()
+        screen_height = self.master.winfo_screenheight()
+        size = tuple(int(_) for _ in self.master.geometry().split('+')[0].split('x'))
         x = screen_width / 2 - size[0] / 2
         y = screen_height / 2 - size[1] / 2
-        master.geometry("180x150+%d+%d" % (x - (180 / 2), y - (150 / 2)))
+        self.master.geometry("180x150+%d+%d" % (x - (180 / 2), y - (150 / 2)))
 
         # force ui to not resize
         self.master.resizable(False, False)
@@ -60,7 +60,7 @@ class mainUI:
         self.master.mainloop()
 
     # command to call the main pygame window
-    def start_game(self):
+    def start_game(self,event=None):
         # get height and width from the UI
         height, width = self.height.get(), self.width.get()
 
