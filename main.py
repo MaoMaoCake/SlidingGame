@@ -20,11 +20,16 @@ class mainUI:
 
         # putting of all the ui element
         # put labels with text
-        tk.Label(self.master, text='Sliding Game', justify="center").grid(column=2, columnspan=3, row=1)
-        tk.Label(self.master, text="Size Of Grid", justify="center").grid(columnspan=3, row=2, column=2)
-        tk.Label(self.master, text="width", justify="center").grid(column=1, row=10)
-        tk.Label(self.master, text="height", justify="center").grid(column=1, row=11)
-        tk.Label(self.master, text="difficulty", justify="center").grid(column=1, row=12)
+        tk.Label(self.master, text='Sliding Game', justify="center")\
+            .grid(column=2, columnspan=3, row=1)
+        tk.Label(self.master, text="Size Of Grid", justify="center")\
+            .grid(columnspan=3, row=2, column=2)
+        tk.Label(self.master, text="width", justify="center")\
+            .grid(column=1, row=10)
+        tk.Label(self.master, text="height", justify="center")\
+            .grid(column=1, row=11)
+        tk.Label(self.master, text="difficulty", justify="center")\
+            .grid(column=1, row=12)
 
         # entry elements
         self.width = tk.Entry(self.master)
@@ -35,7 +40,17 @@ class mainUI:
         # select difficulty
         self.difficulty = tk.StringVar()
         self.difficulty.set('normal')
-        OPTIONS = ['impossible', 'expert', 'hard', 'normal', 'easy+', 'easy', 'very easy', 'idiot']
+
+
+        # options for difficulty
+        OPTIONS = ['impossible',
+                   'expert',
+                   'hard',
+                   'normal',
+                   'easy+',
+                   'easy',
+                   'very easy',
+                   'idiot']
         self.difficulty_option = tk.OptionMenu(master, self.difficulty, *OPTIONS).grid(row=12, column=2)
 
         # bind the button
