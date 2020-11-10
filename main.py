@@ -6,7 +6,7 @@ from game import SlidingGame
 class mainUI:
     def __init__(self, master):
         self.master = master
-
+        self.master.bind("<Return>",self.start_game)
         # center the selection ui
         screen_width = self.master.winfo_screenwidth()
         screen_height = self.master.winfo_screenheight()
@@ -45,7 +45,7 @@ class mainUI:
         self.master.mainloop()
 
     # command to call the main pygame window
-    def start_game(self):
+    def start_game(self,event=None):
         # get height and width from the UI
         height, width = self.height.get(), self.width.get()
 
