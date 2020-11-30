@@ -6,6 +6,7 @@ import time
 
 
 class SlidingGame:
+    # stack to store moves
     class ActionStack:
         def __init__(self):
             self.stack = []
@@ -38,7 +39,7 @@ class SlidingGame:
             return self.top + 1
 
     def __init__(self, width=4, height=4, difficulty="normal"):
-        # Create the constants (go ahead and experiment with different values)
+        # Create the constants for game
         self.board_width = width  # number of columns in the board
         self.board_height = height  # number of rows in the board
         self.tile_size = 80
@@ -46,6 +47,7 @@ class SlidingGame:
         self.window_height = 480
         self.FPS = 30
         self.BLANK = None
+        # moves setting for difficulty
         if difficulty == "impossible":
             self.difficulty = 200
         elif difficulty == "expert":
@@ -62,7 +64,8 @@ class SlidingGame:
             self.difficulty = 20
         elif difficulty == "idiot":
             self.difficulty = 5
-        # color settings
+
+        # color settings (set it to use it easier)
         #                 R    G    B
         self.BLACK = (0, 0, 0)
         self.WHITE = (255, 255, 255)
@@ -70,6 +73,7 @@ class SlidingGame:
         self.DARKTURQUOISE = (3, 54, 73)
         self.GREEN = (0, 204, 0)
 
+        # set colors of UI elements
         self.bg_color = self.DARKTURQUOISE
         self.tile_color = self.GREEN
         self.text_color = self.WHITE
@@ -83,15 +87,17 @@ class SlidingGame:
         self.x_margin = int((self.window_width - (self.tile_size * self.board_width + (self.board_width - 1))) / 2)
         self.y_margin = int((self.window_height - (self.tile_size * self.board_height + (self.board_height - 1))) / 2)
 
+        # set moves "data"
         self.UP = 'up'
         self.DOWN = 'down'
         self.LEFT = 'left'
         self.RIGHT = 'right'
 
+        # pygame initialise core values
         pygame.init()
         self.fps_clock = pygame.time.Clock()
-        self.display_surf = pygame.display.set_mode((self.window_width, self.window_height))
-        pygame.display.set_caption('Slide Puzzle')
+        self.display_surf = pygame.display.set_mode((self.window_width, self.window_height))  # main surface
+        pygame.display.set_caption('Slide Puzzle')  # set title
         self.basic_font = pygame.font.Font('freesansbold.ttf', self.font_size)
 
         # Store the option buttons and their rectangles in OPTIONS.
@@ -108,11 +114,12 @@ class SlidingGame:
                                                          self.window_width - 120,
                                                          self.window_height - 30)
 
+    # main function
     def main(self):
 
         mainBoard, solutionSeq = self.generateNewPuzzle(self.difficulty)
         SOLVEDBOARD = self.getStartingBoard()  # a solved board is the same as the board in a start state.
-        allMoves = self.ActionStack()  # list of moves made from the solved configuration
+        allMoves = self.ActionStack()  # stack of moves made from the solved configuration
 
         while True:  # main game loop
             slideTo = None  # the direction, if any, a tile should slide
@@ -120,7 +127,7 @@ class SlidingGame:
             if mainBoard == SOLVEDBOARD:
                 msg = 'Solved!'
 
-            self.drawBoard(mainBoard, msg)
+            self.drawBoard(mainBoard, msg)  # draw the main board
 
             self.checkForQuit()
             for event in pygame.event.get():  # event handling loop
@@ -129,22 +136,22 @@ class SlidingGame:
 
                     if (spotx, spoty) == (None, None):
                         # check if the user clicked on an option button
-                        if self.reset_rect.collidepoint(event.pos):
+                        if self.reset_rect.collidepoint(event.pos):  # if the reset surface is pressed
                             self.resetAnimation(mainBoard, allMoves)  # clicked on Reset button
-                            allMoves.clear_stack()
-                        elif self.new_rect.collidepoint(event.pos):
-                            allMoves.clear_stack()
+                            allMoves.clear_stack() # clear the stack
+                        elif self.new_rect.collidepoint(event.pos):  # if the new surface is pressed
+                            allMoves.clear_stack()  # clear stack
                             mainBoard, solutionSeq = self.generateNewPuzzle(
                                 self.difficulty)  # clicked on New Game button
-                        elif self.solve_rect.collidepoint(event.pos):
+                        elif self.solve_rect.collidepoint(event.pos):  # if the solve surface is pressed
                             self.resetAnimation(mainBoard, solutionSeq.add(allMoves))
                             # clicked on Solve button
-                            allMoves.clear_stack()
-                        elif self.undo_rect.collidepoint(event.pos):
-                            self.undo(mainBoard, allMoves)
+                            allMoves.clear_stack()  # clear stack
+                        elif self.undo_rect.collidepoint(event.pos):  # if the undo surface is pressed
+                            self.undo(mainBoard, allMoves) # call undo method
                     else:
                         # check if the clicked tile was next to the blank spot
-
+                        # set slideTo to directions
                         blankx, blanky = self.getBlankPosition(mainBoard)
                         if spotx == blankx + 1 and spoty == blanky:
                             slideTo = self.LEFT
@@ -157,6 +164,7 @@ class SlidingGame:
 
                 elif event.type == KEYUP:
                     # check if the user pressed a key to slide a tile
+                    # use keyboard to control the game
                     if event.key in (K_LEFT, K_a) and self.isValidMove(mainBoard, self.LEFT):
                         slideTo = self.LEFT
                     elif event.key in (K_RIGHT, K_d) and self.isValidMove(mainBoard, self.RIGHT):
@@ -213,7 +221,7 @@ class SlidingGame:
     def makeMove(self, board, move):
         # This function does not check if the move is valid.
         blankx, blanky = self.getBlankPosition(board)
-
+        # make a move
         if move == self.UP:
             board[blankx][blanky], board[blankx][blanky + 1] = board[blankx][blanky + 1], board[blankx][blanky]
         elif move == self.DOWN:
@@ -223,7 +231,7 @@ class SlidingGame:
         elif move == self.RIGHT:
             board[blankx][blanky], board[blankx - 1][blanky] = board[blankx - 1][blanky], board[blankx][blanky]
 
-    def isValidMove(self, board, move):
+    def isValidMove(self, board, move): # check for a valid move
         blankx, blanky = self.getBlankPosition(board)
         return (move == self.UP and blanky != len(board[0]) - 1) or \
                (move == self.DOWN and blanky != 0) or \
@@ -374,6 +382,7 @@ class SlidingGame:
             self.makeMove(board, oppositeMove)
 
     def undo(self, board, allMoves):
+        # make the latest moves in allMoves in reverse
         try:
             move = allMoves.pop()
             print(move)
