@@ -367,20 +367,22 @@ class SlidingGame:
 
     def resetAnimation(self, board, allMoves):
         # make all of the moves in allMoves in reverse.
-        for i in range(len(allMoves)):
-            move = allMoves.pop()
-            print(move)
-            if move == self.UP:
-                oppositeMove = self.DOWN
-            elif move == self.DOWN:
-                oppositeMove = self.UP
-            elif move == self.RIGHT:
-                oppositeMove = self.LEFT
-            elif move == self.LEFT:
-                oppositeMove = self.RIGHT
-            self.slideAnimation(board, oppositeMove, '', animationSpeed=int(self.tile_size / 2))
-            self.makeMove(board, oppositeMove)
-
+        try:
+            for i in range(len(allMoves)):
+                move = allMoves.pop()
+                print(move)
+                if move == self.UP:
+                    oppositeMove = self.DOWN
+                elif move == self.DOWN:
+                    oppositeMove = self.UP
+                elif move == self.RIGHT:
+                    oppositeMove = self.LEFT
+                elif move == self.LEFT:
+                    oppositeMove = self.RIGHT
+                self.slideAnimation(board, oppositeMove, '', animationSpeed=int(self.tile_size / 2))
+                self.makeMove(board, oppositeMove)
+        except IndexError:
+            self.drawBoard(board, "Already solved")
     def undo(self, board, allMoves):
         # make the latest moves in allMoves in reverse
         try:
