@@ -357,13 +357,22 @@ class SlidingGame:
         pygame.display.update()
         pygame.time.wait(500)  # pause 500 milliseconds for effect
         lastMove = None
-        for i in range(numSlides):
-            move = self.getRandomMove(board, lastMove)
-            self.slideAnimation(board, move, 'Generating new puzzle...', animationSpeed=int(self.tile_size / 3))
-            self.makeMove(board, move)
-            sequence.push(move)
-            lastMove = move
-        return board, sequence
+        if numSlides >= 100:
+            for i in range(numSlides):
+                move = self.getRandomMove(board, lastMove)
+                self.slideAnimation(board, move, 'Generating new puzzle...', animationSpeed=int(self.tile_size))
+                self.makeMove(board, move)
+                sequence.push(move)
+                lastMove = move
+            return board, sequence
+        elif numSlides < 100:
+            for i in range(numSlides):
+                move = self.getRandomMove(board, lastMove)
+                self.slideAnimation(board, move, 'Generating new puzzle...', animationSpeed=int(self.tile_size / 3))
+                self.makeMove(board, move)
+                sequence.push(move)
+                lastMove = move
+            return board, sequence
 
     def resetAnimation(self, board, allMoves):
         # make all of the moves in allMoves in reverse.
